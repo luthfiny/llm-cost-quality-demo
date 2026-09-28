@@ -1,0 +1,24 @@
+# Real mode via any OpenAI-compatible endpoint. Copy to config/openrouter.yaml,
+# pick two models, and copy their CURRENT prices from the provider's pricing page
+# (USD per 1M tokens). Wrong prices = wrong report.
+#
+#   export OPENROUTER_API_KEY=...
+#   uv run lcq --config config/openrouter.yaml eval
+provider:
+  kind: openai_compatible
+  base_url: https://openrouter.ai/api/v1
+  api_key_env: OPENROUTER_API_KEY
+
+models:
+  cheap:
+    name: google/gemini-2.5-flash-lite   # replace with any small model
+    input_per_mtok: 0.0                  # FILL IN
+    output_per_mtok: 0.0                 # FILL IN
+  strong:
+    name: google/gemini-2.5-pro          # replace with any frontier model
+    input_per_mtok: 0.0                  # FILL IN
+    output_per_mtok: 0.0                 # FILL IN
+
+retrieval:
+  top_k: 3
+  min_score: 3.0

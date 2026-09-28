@@ -1,0 +1,259 @@
+# Eval suite for the Kopi Kilat support bot.
+#
+# Categories
+#   lookup      - answer is in one passage
+#   multi_hop   - answer needs two passages (checks require both facts)
+#   policy      - answer depends on a condition or date rule
+#   escalation  - not covered by the knowledge base; the bot must hand off
+#
+# Numbers are matched loosely (`89[.,]?000`) so "IDR 89,000" and "Rp89.000" both pass.
+cases:
+  # ---------------------------------------------------------------- lookup
+  - id: lookup-basic-price
+    category: lookup
+    question: How much is the Basic plan?
+    must_match: ['89[.,]?000']
+    must_cite: [plans]
+  - id: lookup-plus-bags
+    category: lookup
+    question: How many bags do I get on the Plus plan?
+    must_match: ['\b(4|four)\b']
+    must_cite: [plans]
+  - id: lookup-office-price
+    category: lookup
+    question: What does the Office plan cost per month?
+    must_match: ['450[.,]?000']
+    must_cite: [plans]
+  - id: lookup-bag-size
+    category: lookup
+    question: How big is each coffee bag?
+    must_match: ['200 ?g']
+    must_cite: [plans]
+  - id: lookup-annual-discount
+    category: lookup
+    question: Is there a discount for annual billing?
+    must_match: ['10 months|two months|2 months']
+    must_cite: [plans]
+  - id: lookup-change-plan-when
+    category: lookup
+    question: When does a plan upgrade or downgrade take effect?
+    must_match: ['next billing date']
+    must_cite: [plans]
+  - id: lookup-jabodetabek-shipping
+    category: lookup
+    question: Is shipping free in Jabodetabek?
+    must_match: ['free']
+    must_cite: [shipping]
+  - id: lookup-outside-java-fee
+    category: lookup
+    question: What is the shipping fee to areas outside Java?
+    must_match: ['35[.,]?000']
+    must_cite: [shipping]
+  - id: lookup-roast-days
+    category: lookup
+    question: Which days is the coffee roasted?
+    must_match: ['monday', 'thursday']
+    must_cite: [shipping]
+  - id: lookup-tracking
+    category: lookup
+    question: How do I get my tracking number?
+    must_match: ['whatsapp|email']
+    must_cite: [shipping]
+  - id: lookup-billing-date
+    category: lookup
+    question: What day of the month am I billed?
+    must_match: ['25']
+    must_cite: [billing]
+  - id: lookup-payment-methods
+    category: lookup
+    question: Which payment methods do you accept?
+    must_match: ['qris', 'gopay']
+    must_cite: [billing]
+  - id: lookup-failed-payment-retries
+    category: lookup
+    question: How many times do you retry a failed payment?
+    must_match: ['\b(3|three)\b']
+    must_cite: [billing]
+  - id: lookup-max-pause
+    category: lookup
+    question: For how long can I pause my subscription?
+    must_match: ['3 months|three months']
+    must_cite: [pause_cancel]
+  - id: lookup-damaged-deadline
+    category: lookup
+    question: My coffee bag arrived damaged. What should I do?
+    must_match: ['photo', '48 hours']
+    must_cite: [refunds]
+  - id: lookup-ewallet-refund-time
+    category: lookup
+    question: How long does a refund to GoPay take?
+    must_match: ['1 to 3|1-3|1–3']
+    must_cite: [refunds]
+  - id: lookup-referral-friend-discount
+    category: lookup
+    question: What discount does my friend get from my referral link?
+    must_match: ['50 ?%']
+    must_cite: [referral]
+  - id: lookup-referral-limit
+    category: lookup
+    question: What is the maximum number of referrals per year?
+    must_match: ['\b(10|ten)\b']
+    must_cite: [referral]
+  - id: lookup-npwp
+    category: lookup
+    question: What do I need to get a tax invoice (faktur pajak)?
+    must_match: ['npwp']
+    must_cite: [office]
+  - id: lookup-office-terms
+    category: lookup
+    question: What are the payment terms for Office plan invoices?
+    must_match: ['net 14|14 days']
+    must_cite: [office]
+  - id: lookup-grind-options
+    category: lookup
+    question: What grind options can I choose?
+    must_match: ['espresso', 'french press']
+    must_cite: [grind]
+  - id: lookup-grind-recommended
+    category: lookup
+    question: Which grind do you recommend for freshness?
+    must_match: ['whole bean']
+    must_cite: [grind]
+  - id: lookup-referral-credit-expiry
+    category: lookup
+    question: Does referral credit expire?
+    must_match: ['12 months|twelve months']
+    must_cite: [referral]
+  - id: lookup-grinder-loan
+    category: lookup
+    question: Do Office plan customers get a grinder?
+    must_match: ['grinder loan|loan']
+    must_cite: [office]
+
+  # ---------------------------------------------------------------- multi_hop
+  - id: hop-plus-bali-total
+    category: multi_hop
+    question: I live in Bali and want the Plus plan. What is the plan price and what shipping fee would I pay each month?
+    must_match: ['149[.,]?000', '35[.,]?000']
+    must_cite: [plans, shipping]
+  - id: hop-basic-bandung-total
+    category: multi_hop
+    question: How much would the Basic plan plus shipping to Bandung cost me per month?
+    must_match: ['89[.,]?000', '15[.,]?000']
+    must_cite: [plans, shipping]
+  - id: hop-office-tax-and-terms
+    category: multi_hop
+    question: For the Office plan, how much is it per month and what do I need for a faktur pajak?
+    must_match: ['450[.,]?000', 'npwp']
+    must_cite: [plans, office]
+  - id: hop-failed-payment-then-pause
+    category: multi_hop
+    question: If my GoPay payment keeps failing, what happens to my subscription and which payment methods can I switch to?
+    must_match: ['paused', 'qris|ovo|bca|credit card']
+    must_cite: [billing]
+  - id: hop-refund-card-vs-ewallet
+    category: multi_hop
+    question: Compare how long refunds take to a credit card versus OVO.
+    must_match: ['7 to 14|7-14|7–14', '1 to 3|1-3|1–3']
+    must_cite: [refunds]
+  - id: hop-referral-both-sides
+    category: multi_hop
+    question: What do both my friend and I get when my friend uses my referral link?
+    must_match: ['50 ?%', '25[.,]?000']
+    must_cite: [referral]
+  - id: hop-annual-plus
+    category: multi_hop
+    question: If I pay the Plus plan annually, how does annual billing work and what is the monthly plan price?
+    must_match: ['149[.,]?000', '10 months']
+    must_cite: [plans]
+  - id: hop-outside-java-delivery
+    category: multi_hop
+    question: I'm in Makassar. How much is shipping and how long would delivery take after the coffee is roasted on Monday?
+    must_match: ['35[.,]?000', '4 to 7|4-7|4–7']
+    must_cite: [shipping]
+  - id: hop-pause-and-billing
+    category: multi_hop
+    question: If I pause my subscription, will I still be billed on the 25th, and how long can the pause last?
+    must_match: ['not billed', '3 months|three months']
+    must_cite: [pause_cancel]
+  - id: hop-damaged-and-refund-opened
+    category: multi_hop
+    question: My bag arrived torn and I already opened it. Can I get it replaced, and would opened bags normally be refundable?
+    must_match: ['replacement|replace', 'damaged']
+    must_cite: [refunds]
+  - id: hop-office-bags-and-grind
+    category: multi_hop
+    question: How many bags does the Office plan include and what grind options can we choose for them?
+    must_match: ['\b15\b', 'espresso|filter|whole bean']
+    must_cite: [plans, grind]
+  - id: hop-referral-cash
+    category: multi_hop
+    question: How much credit do I get per referral and can I withdraw that credit as cash?
+    must_match: ['25[.,]?000', 'cannot|not']
+    must_cite: [referral]
+  - id: hop-upgrade-proration
+    category: multi_hop
+    question: If I upgrade from Basic to Plus today, when does it apply and will I be charged a prorated amount for this month?
+    must_match: ['next billing date', 'not prorated|no prorat|isn.t prorated|are not prorated']
+    must_cite: [plans]
+  - id: hop-thursday-cutoff
+    category: multi_hop
+    question: If I confirm my order at 11:00 WIB on a Thursday, does it ship the same day, and how long until it reaches Jakarta?
+    must_match: ['same day', '1 to 2|1-2|1–2']
+    must_cite: [shipping]
+
+  # ---------------------------------------------------------------- policy
+  - id: policy-cancel-on-26th
+    category: policy
+    question: I cancelled on the 26th. Will I still get this month's shipment?
+    must_match: ['following billing cycle|still receive']
+    must_cite: [pause_cancel]
+  - id: policy-cancel-before-25
+    category: policy
+    question: What is the deadline to cancel so I am not charged next month?
+    must_match: ['before the 25']
+    must_cite: [pause_cancel]
+  - id: policy-grind-on-21st
+    category: policy
+    question: I changed my grind on the 21st. Will my next shipment use the new grind?
+    must_match: ['before the 20|on or after the 20|after that']
+    must_cite: [grind]
+  - id: policy-opened-bag-refund
+    category: policy
+    question: Can I get a refund for an opened bag I did not like?
+    must_match: ['cannot|not be refunded|no']
+    must_cite: [refunds]
+
+  # ---------------------------------------------------------------- escalation
+  - id: esc-coffee-machine
+    category: escalation
+    question: Do you sell espresso machines?
+    expect_escalation: true
+  - id: esc-decaf
+    category: escalation
+    question: Do you have decaf beans?
+    expect_escalation: true
+  - id: esc-store-hours
+    category: escalation
+    question: What are the opening hours of your cafe in Kemang?
+    expect_escalation: true
+  - id: esc-international
+    category: escalation
+    question: Can you ship to Singapore?
+    expect_escalation: true
+  - id: esc-job
+    category: escalation
+    question: Are you hiring baristas?
+    expect_escalation: true
+  - id: esc-account-specific
+    category: escalation
+    question: Why was I charged twice last month on my credit card?
+    expect_escalation: true
+  - id: esc-caffeine
+    category: escalation
+    question: How much caffeine is in one cup of your coffee?
+    expect_escalation: true
+  - id: esc-wholesale
+    category: escalation
+    question: Can my cafe buy 50 kg of beans at a wholesale price?
+    expect_escalation: true

@@ -1,0 +1,18 @@
+# Offline mode: deterministic mock models, runs anywhere (used by CI).
+# Prices are illustrative small-vs-large model prices, USD per 1M tokens.
+provider:
+  kind: mock
+
+models:
+  cheap:
+    name: mock-small
+    input_per_mtok: 0.10
+    output_per_mtok: 0.40
+  strong:
+    name: mock-large
+    input_per_mtok: 1.25
+    output_per_mtok: 10.00
+
+retrieval:
+  top_k: 3
+  min_score: 3.0
