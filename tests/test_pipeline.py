@@ -83,3 +83,16 @@ def test_cli_eval_writes_report(tmp_path):
     assert rc == 0
     assert "Routed vs strong-only" in out.read_text()
     assert list((tmp_path / "traces").glob("*.jsonl"))
+
+
+def test_cache_replays_identical_calls(tmp_path):
+    from lcq.providers import CachingProvider, MockProvider
+
+    path = tmp_path / "cache.jsonl"
+    messages = [{"role": "user", "content": "CONTEXT:\n[a#b]\nThe fee is 5.\n\nQUESTION: fee?"}]
+    first = CachingProvider(MockProvider(), path)
+    a = first.complete("m", "strong", messages)
+    second = CachingProvider(MockProvider(), path)  # fresh instance reads from disk
+    b = second.complete("m", "strong", messages)
+    assert a == b
+    assert (first.misses, second.hits, second.misses) == (1, 1, 0)

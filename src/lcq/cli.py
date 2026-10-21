@@ -1,12 +1,17 @@
 from __future__ import annotations
 
 import argparse
+import dataclasses
+import os
 import sys
 from pathlib import Path
+
+import httpx
 
 from lcq.bot import SupportBot
 from lcq.config import load_settings
 from lcq.evals import load_cases, run_suite
+from lcq.providers import CachingProvider, ProviderError
 from lcq.report import render_markdown, summarize
 from lcq.tracing import Tracer
 
@@ -14,7 +19,18 @@ ROOT = Path(__file__).resolve().parents[2]
 MODES = {"strong-only": "strong", "cheap-only": "cheap", "routed": None}
 
 
+def _load_dotenv(path: Path) -> None:
+    """Minimal .env support (KEY=VALUE lines); real environment variables win."""
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        key, sep, value = line.strip().partition("=")
+        if sep and not key.startswith("#"):
+            os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+
+
 def main(argv: list[str] | None = None) -> int:
+    _load_dotenv(ROOT / ".env")
     parser = argparse.ArgumentParser(prog="lcq", description=__doc__)
     parser.add_argument("--config", type=Path, default=ROOT / "config" / "mock.yaml")
     parser.add_argument("--kb", type=Path, default=ROOT / "data" / "kb")
@@ -28,6 +44,12 @@ def main(argv: list[str] | None = None) -> int:
     ev.add_argument("--modes", default="strong-only,cheap-only,routed")
     ev.add_argument("--out", type=Path, default=ROOT / "reports" / "latest.md")
     ev.add_argument("--traces", type=Path, default=ROOT / "traces")
+    ev.add_argument(
+        "--cache",
+        type=Path,
+        default=None,
+        help="Replay identical (model, messages) calls from this JSONL file; saves quota and cost",
+    )
     ev.add_argument(
         "--min-pass-rate",
         type=float,
@@ -57,20 +79,38 @@ def main(argv: list[str] | None = None) -> int:
     if unknown:
         parser.error(f"unknown modes: {sorted(unknown)}")
 
+    cache = None
+    if args.cache:
+        cache = CachingProvider(settings.provider, args.cache)
+        settings = dataclasses.replace(settings, provider=cache)
     tracer = Tracer(args.traces, run_name="eval")
     bot = SupportBot(settings, args.kb, tracer)
     summaries, failures = [], {}
-    for mode in modes:
-        results = run_suite(bot, cases, force_tier=MODES[mode])
-        summaries.append(summarize(mode, results))
-        failures[mode] = [r for r in results if not r.passed]
+    try:
+        for mode in modes:
+            results = run_suite(bot, cases, force_tier=MODES[mode])
+            summaries.append(summarize(mode, results))
+            failures[mode] = [r for r in results if not r.passed]
+    except (ProviderError, httpx.HTTPError) as exc:
+        tracer.close()
+        print(f"Stopped: {exc}", file=sys.stderr)
+        if cache:
+            print(f"{cache.misses} new calls cached; re-run later to resume.", file=sys.stderr)
+        return 2
     tracer.close()
 
-    report = render_markdown(summaries, failures, {t: m.name for t, m in settings.models.items()})
+    report = render_markdown(
+        summaries,
+        failures,
+        {t: m.name for t, m in settings.models.items()},
+        settings.pricing_note,
+    )
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(report, encoding="utf-8")
     print(report)
     print(f"Report: {args.out}\nTraces: {tracer.path}", file=sys.stderr)
+    if cache:
+        print(f"Cache: {cache.hits} replayed, {cache.misses} new calls", file=sys.stderr)
 
     if args.min_pass_rate is not None:
         routed = next((s for s in summaries if s.mode == "routed"), None)

@@ -1,23 +1,33 @@
-# Real mode via any OpenAI-compatible endpoint. Copy to config/openrouter.yaml,
-# pick two models, and copy their CURRENT prices from the provider's pricing page
-# (USD per 1M tokens). Wrong prices = wrong report.
+# Real models via OpenRouter's free tier. Copy to config/openrouter.yaml.
 #
-#   export OPENROUTER_API_KEY=...
-#   uv run lcq --config config/openrouter.yaml eval
+#   echo 'OPENROUTER_API_KEY=...' > .env      # or export it
+#   uv run lcq --config config/openrouter.yaml eval --cache .cache/openrouter.jsonl
+#
+# The free tier allows 50 free-model requests/day; a full run needs 100
+# (50 cases x 2 models). With --cache, just re-run after the daily reset and it
+# resumes; the routed mode replays baseline answers and needs no extra calls.
+#
+# Prices are the list prices of the PAID variants of the same models (USD per
+# 1M tokens, OpenRouter, 2026-09-29), so the cost report reflects what this
+# traffic would cost in production. Update them if you change models.
 provider:
   kind: openai_compatible
   base_url: https://openrouter.ai/api/v1
   api_key_env: OPENROUTER_API_KEY
 
+pricing_note: >-
+  Run on OpenRouter's free variants; costs use the list prices of the paid
+  variants of the same models (OpenRouter, 2026-09-29).
+
 models:
   cheap:
-    name: google/gemini-2.5-flash-lite   # replace with any small model
-    input_per_mtok: 0.0                  # FILL IN
-    output_per_mtok: 0.0                 # FILL IN
+    name: nvidia/nemotron-3.5-lightning:free
+    input_per_mtok: 0.08
+    output_per_mtok: 0.20
   strong:
-    name: google/gemini-2.5-pro          # replace with any frontier model
-    input_per_mtok: 0.0                  # FILL IN
-    output_per_mtok: 0.0                 # FILL IN
+    name: nvidia/nemotron-3-ultra-550b-a55b:free
+    input_per_mtok: 0.60
+    output_per_mtok: 2.40
 
 retrieval:
   top_k: 3

@@ -9,3 +9,5 @@ config/*.yaml
 !config/mock.yaml
 !config/*.example.yaml
 .env
+.cache/
+reports/openrouter-latest.md

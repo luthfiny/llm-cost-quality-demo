@@ -105,7 +105,7 @@ Models: cheap = `mock-small`, strong = `mock-large`
 - **hop-outside-java-delivery** (multi_hop, route `cheap`): missing /35[.,]?000/; missing /4 to 7|4-7|4–7/
   - Q: I'm in Makassar. How much is shipping and how long would delivery take after the coffee is roasted on Monday?
   - A: Coffee is roasted every Monday and Thursday. [shipping#roasting-and-dispatch]
-- **hop-pause-and-billing** (multi_hop, route `cheap`): missing /not billed/
+- **hop-pause-and-billing** (multi_hop, route `cheap`): missing /(not|no|n't)\b[^.]{0,20}bill/
   - Q: If I pause my subscription, will I still be billed on the 25th, and how long can the pause last?
   - A: You can pause your subscription for up to 3 months. [pause_cancel#pausing]
 - **hop-damaged-and-refund-opened** (multi_hop, route `cheap`): missing /replacement|replace/

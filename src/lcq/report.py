@@ -48,9 +48,14 @@ def summarize(mode: str, results: list[CaseResult]) -> ModeSummary:
 
 
 def render_markdown(
-    summaries: list[ModeSummary], failures: dict[str, list[CaseResult]], models: dict[str, str]
+    summaries: list[ModeSummary],
+    failures: dict[str, list[CaseResult]],
+    models: dict[str, str],
+    pricing_note: str | None = None,
 ) -> str:
     lines = ["# Cost vs quality report", ""]
+    if pricing_note:
+        lines += [f"> **Pricing:** {pricing_note}", ""]
     if any(s.simulated for s in summaries):
         lines += [
             "> **Simulated run.** These numbers come from the offline mock provider and only",

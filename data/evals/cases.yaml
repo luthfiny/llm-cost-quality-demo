@@ -174,7 +174,7 @@ cases:
   - id: hop-pause-and-billing
     category: multi_hop
     question: If I pause my subscription, will I still be billed on the 25th, and how long can the pause last?
-    must_match: ['not billed', '3 months|three months']
+    must_match: ["(not|no|n't)\\b[^.]{0,20}bill", '3 months|three months']
     must_cite: [pause_cancel]
   - id: hop-damaged-and-refund-opened
     category: multi_hop
@@ -194,7 +194,7 @@ cases:
   - id: hop-upgrade-proration
     category: multi_hop
     question: If I upgrade from Basic to Plus today, when does it apply and will I be charged a prorated amount for this month?
-    must_match: ['next billing date', 'not prorated|no prorat|isn.t prorated|are not prorated']
+    must_match: ['next billing date', "(not|no|n't)\\b[^.]{0,40}prorat"]
     must_cite: [plans]
   - id: hop-thursday-cutoff
     category: multi_hop

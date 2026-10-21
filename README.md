@@ -36,7 +36,36 @@ model quality. The simulated report is in [reports/sample-mock-report.md](report
 | cheap-only | 25/50 | $0.03 | cheap 50 |
 | routed | 35/50 | $0.45 | cheap 23, none 5, strong 22 |
 
-<!-- REAL-RUN-RESULTS: replace this block with the table from a real-model run -->
+### Real models (OpenRouter, 2026-09-29)
+
+cheap = `nvidia/nemotron-3.5-lightning`, strong = `nvidia/nemotron-3-ultra-550b-a55b`.
+Full report: [reports/openrouter-report.md](reports/openrouter-report.md).
+
+| Mode | Pass | Cost / 1k questions | Route mix |
+|---|---|---|---|
+| strong-only | 49/50 | $0.51 | strong 50 |
+| cheap-only | 47/50 | $0.19 | cheap 50 |
+| **routed** | **48/50** | **$0.35** | cheap 23, none 5, strong 22 |
+
+**Routing cut cost by 32.1% for one fewer eval pass (48/50 vs 49/50).**
+
+What the evals caught:
+
+- **Per-token price is not per-answer price.** The cheap model lists at 7–12× lower prices, but it
+  averaged 843 output tokens per answer against the strong model's 150, so it was only ~2.7× cheaper per
+  answer.
+- **The cheap model's failures were operational, not factual:** two empty answers (its token budget
+  went to reasoning) and one answer that leaked its reasoning ("Here's a thinking process: ...").
+  Neither shows up in a manual spot check. Both show up in an eval.
+- **Both models handed off all 8 out-of-scope questions.** The strong model's one miss was over-cautious:
+  it escalated a Jakarta delivery question because the docs say "Jabodetabek" and never "Jakarta".
+  The fix is in the knowledge base, not the model.
+- Two checks rejected correct answers on the first run ("you won't be billed", "not charged a
+  prorated amount"). They were widened before the final report. Grader bugs are real bugs, too.
+
+> Runs used OpenRouter's free variants. Costs use the list prices of the paid variants of the same
+> models. Latency is omitted because free-tier queueing (up to minutes per request) says nothing
+> about production latency.
 
 ## Run against real models
 

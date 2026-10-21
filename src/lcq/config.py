@@ -27,6 +27,7 @@ class Settings:
     models: dict[str, ModelSpec]
     top_k: int
     min_retrieval_score: float
+    pricing_note: str | None = None
 
 
 def load_settings(path: Path) -> Settings:
@@ -59,4 +60,5 @@ def load_settings(path: Path) -> Settings:
         models=models,
         top_k=retrieval.get("top_k", 3),
         min_retrieval_score=retrieval.get("min_score", 3.0),
+        pricing_note=raw.get("pricing_note"),
     )
